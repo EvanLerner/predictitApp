@@ -29,7 +29,8 @@ WhiteRectangle = pygame.Rect(0, 0, WIDTH, HEIGHT)
 HEALTH_FONT = pygame.font.SysFont('comicsans', 40)
 WINNER_FONT = pygame.font.SysFont('comicsans', 100)
 
-FPS = 60
+#FPS = 60
+FPS = 30
 VEL = 5
 BULLET_VEL = 7
 MAX_BULLETS = 3
@@ -40,7 +41,10 @@ YELLOW_HIT = pygame.USEREVENT + 1
 RED_HIT = pygame.USEREVENT + 2
 
 fadeClock = 0
+fadeClockCap = 200
+transperency = 0
 
+#initialize image
 #create data from predictitAppProject
 data = predictitAppProject.Data()
 firstValues = data.getData()[0]
@@ -55,12 +59,27 @@ image = pygame.image.load(image_file)
 
 
 
-def draw_window(red, yellow, red_bullets, yellow_bullets, red_health, yellow_health, marketNumber):
+def draw_window(marketNumber):
 
     pygame.draw.rect(WIN, WHITE, WhiteRectangle)
 
 
     # draw image, position the image ulc at x=20, y=20
+    global fadeClock
+    
+    if(fadeClock < fadeClockCap * .33):
+        image.set_alpha(int((256*fadeClock/fadeClockCap)*3))
+        #debugging
+        WIN.blit(HEALTH_FONT.render("Fade Value: " + str(int((256*fadeClock/fadeClockCap)*3)), 1, BLACK), (10, 40*11))
+    elif(fadeClock > fadeClockCap * .66):
+        image.set_alpha(int((256*(1-fadeClock/fadeClockCap))*3))
+        #debugging
+        WIN.blit(HEALTH_FONT.render("Fade Value: " + str(int((256*(1-fadeClock/fadeClockCap))*3)), 1, BLACK), (10, 40*11))
+    else:
+        image.set_alpha(256)
+        #debugging
+        WIN.blit(HEALTH_FONT.render("Fade Value: 256", 1, BLACK), (10, 40*11))
+
     WIN.blit(image, (20, 20))
 
     #draw the names of firstValues
@@ -124,12 +143,13 @@ def main():
                 yellow_health -= 1
                 #BULLET_HIT_SOUND.play()
             
+        #change the marketnumber if fadeClock >= fadeClockCap
         fadeClock += 1
-        if(fadeClock >= 200):
+        if(fadeClock >= fadeClockCap):
             marketNumber += 100
             fadeClock = 0
 
-            #get image
+            #change the image here
             global image
             image_url = data.getData()[marketNumber][MARKETVALUEPLACE]
             image_str = urlopen(image_url).read()
@@ -141,8 +161,7 @@ def main():
         keys_pressed = pygame.key.get_pressed()
 
 
-        draw_window(red, yellow, red_bullets, yellow_bullets,
-                    red_health, yellow_health, marketNumber)
+        draw_window(marketNumber)
 
     main()
 
