@@ -18,9 +18,6 @@ class Data:
         #self.predictit_df = pd.DataFrame(self.data)
         self.resetData()
 
-    def getdf(self):
-        return self.predictit_df
-
     def getData(self):
         return self.data
 
@@ -46,13 +43,10 @@ class Data:
         for p in jsondata['markets']:
             for k in p['contracts']:
                 self.data.append([p['id'],p['name'],k['id'],k['name'],k['bestBuyYesCost'],k['bestBuyNoCost'],k['bestSellYesCost'],k['bestSellNoCost'],p['image']])
-
-
-        #commented out below is the code to make it work with pandas
-        # Pandas dataframe named 'predictit_df'
-
-        #self.predictit_df = pd.DataFrame(self.data)
-
-        # Update dataframe column names
-        #self.predictit_df.columns=['Market_ID','Market_Name','Contract_ID','Contract_Name','PredictIt_Yes','bestBuyNoCost','BestSellYesCost','BestSellNoCost','image']
-
+    
+    def getMarketsWithID(self, marketID):
+        marketWithSameID = []
+        for listOfData in self.data:
+            if(listOfData[0] == marketID):
+                marketWithSameID.append(listOfData)
+        return (marketWithSameID)
