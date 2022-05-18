@@ -30,7 +30,7 @@ INFO_FONT = pygame.font.SysFont('comicsans', 10)
 WINNER_FONT = pygame.font.SysFont('comicsans', 100)
 
 #FPS = 60
-FPS = 30
+FPS = 50
 VEL = 5
 BULLET_VEL = 7
 MAX_BULLETS = 3
@@ -44,29 +44,30 @@ RED_HIT = pygame.USEREVENT + 2
 FADERATIO = .33
 
 
-fadeClockCap = 200
+fadeClockCap = 300
 transperency = 0
 
 #initialize image
 #create data from predictitAppProject
 data = predictitAppProject.Data()
-firstValues = data.getData()[0]
+
 marketNumber = 0
 
 
 
 
-def draw_window(marketNumber, fadeClock, image):
+def draw_window(marketID, fadeClock, image):
 
 
     #value below is the markets with the same id
-    markets = data.getMarketsWithID(data.getData()[marketNumber][0])
+    markets = data.getMarketsWithID(marketID)
 
     pygame.draw.rect(WIN, WHITE, WhiteRectangle)
 
-    fade(image, fadeClock)
 
-    WIN.blit(image, (20, 20))
+    fade(image, fadeClock)
+ 
+    WIN.blit(image, (WIDTH* .85, HEIGHT*.75))
 
     #depth and width of text
     depth = 10
@@ -75,7 +76,8 @@ def draw_window(marketNumber, fadeClock, image):
     fade(marketName, fadeClock)
     WIN.blit(marketName, (width, depth))
     depth += 20
-    
+    resetdepth = 30
+
     for i in range(len(markets)):
         for j in range(6):
             # value = data.getData()[marketNumber][index]
@@ -83,21 +85,26 @@ def draw_window(marketNumber, fadeClock, image):
             fade(text, fadeClock)
             WIN.blit(text, (width,depth))
             depth += 20
+        depth = resetdepth
         width += 150
-        depth = 30
+        if((i+1)%4 == 0):
+            width = 10
+            resetdepth += 6*20+30
+            depth = resetdepth
+
 
     #code for the fade counter in the app 
-    WIN.blit(INFO_FONT.render("Fade Counter: " + str(fadeClock), 1, BLACK), (10, 450))
+    WIN.blit(INFO_FONT.render("Fade Timer: " + str(fadeClock), 1, BLACK), (10, 450))
     pygame.display.update()
 
 
 
-def draw_winner(text):
-    draw_text = WINNER_FONT.render(text, 1, WHITE)
-    WIN.blit(draw_text, (WIDTH/2 - draw_text.get_width() /
-                         2, HEIGHT/2 - draw_text.get_height()/2))
-    pygame.display.update()
-    pygame.time.delay(5000)
+# def draw_winner(text):
+#     draw_text = WINNER_FONT.render(text, 1, WHITE)
+#     WIN.blit(draw_text, (WIDTH/2 - draw_text.get_width() /
+#                          2, HEIGHT/2 - draw_text.get_height()/2))
+#     pygame.display.update()
+#     pygame.time.delay(5000)
 
 #fades an object put into it, using the fadeClock to determine how much fade it should have
 def fade(fadingValue, fadeClock):
@@ -105,27 +112,29 @@ def fade(fadingValue, fadeClock):
         fadingValue.set_alpha(int((256*fadeClock/fadeClockCap)*1/FADERATIO))
 
     elif(fadeClock > fadeClockCap * (1-FADERATIO)):
-        fadingValue.set_alpha(int((256*(1-fadeClock/fadeClockCap))*1/FADERATIO))
+        fadingValue.set_alpha(int((256*(1-fadeClock/fadeClockCap))*1/FADERATIO)-3)
 
     else:
         fadingValue.set_alpha(256)
 
 
 def main():
-    red = pygame.Rect(700, 300, SPACESHIP_WIDTH, SPACESHIP_HEIGHT)
-    yellow = pygame.Rect(100, 300, SPACESHIP_WIDTH, SPACESHIP_HEIGHT)
+    # red = pygame.Rect(700, 300, SPACESHIP_WIDTH, SPACESHIP_HEIGHT)
+    # yellow = pygame.Rect(100, 300, SPACESHIP_WIDTH, SPACESHIP_HEIGHT)
 
-    red_bullets = []
-    yellow_bullets = []
+    # red_bullets = []
+    # yellow_bullets = []
 
-    red_health = 10
-    yellow_health = 10
+    # red_health = 10
+    # yellow_health = 10
 
     clock = pygame.time.Clock()
     run = True
     
     fadeClock = 0
-    marketNumber = 0
+    marketID = data.getRandomMarketID()
+    newMarketID = marketID
+    marketNumber = data.getIndexOfID(marketID)
     #initialize image
     image_url = data.getData()[marketNumber][MARKETVALUEPLACE]
     image_str = urlopen(image_url).read()
@@ -133,6 +142,8 @@ def main():
     image_file = io.BytesIO(image_str)
     # load the image from a file or stream
     image = pygame.image.load(image_file)
+    image = pygame.transform.smoothscale(image, (100, 100)) 
+    # image = pygame.transform.scale(image, (100, 100))
 
     while run:
         clock.tick(FPS)
@@ -141,31 +152,35 @@ def main():
                 run = False
                 pygame.quit()
 
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_LCTRL and len(yellow_bullets) < MAX_BULLETS:
-                    bullet = pygame.Rect(
-                        yellow.x + yellow.width, yellow.y + yellow.height//2 - 2, 10, 5)
-                    yellow_bullets.append(bullet)
-                    #BULLET_FIRE_SOUND.play()
+            # if event.type == pygame.KEYDOWN:
+            #     if event.key == pygame.K_LCTRL and len(yellow_bullets) < MAX_BULLETS:
+            #         bullet = pygame.Rect(
+            #             yellow.x + yellow.width, yellow.y + yellow.height//2 - 2, 10, 5)
+            #         yellow_bullets.append(bullet)
+            #         #BULLET_FIRE_SOUND.play()
 
-                if event.key == pygame.K_RCTRL and len(red_bullets) < MAX_BULLETS:
-                    bullet = pygame.Rect(
-                        red.x, red.y + red.height//2 - 2, 10, 5)
-                    red_bullets.append(bullet)
-                    #BULLET_FIRE_SOUND.play()
+            #     if event.key == pygame.K_RCTRL and len(red_bullets) < MAX_BULLETS:
+            #         bullet = pygame.Rect(
+            #             red.x, red.y + red.height//2 - 2, 10, 5)
+            #         red_bullets.append(bullet)
+            #         #BULLET_FIRE_SOUND.play()
 
-            if event.type == RED_HIT:
-                red_health -= 1
-                #BULLET_HIT_SOUND.play()
+            # if event.type == RED_HIT:
+            #     red_health -= 1
+            #     #BULLET_HIT_SOUND.play()
 
-            if event.type == YELLOW_HIT:
-                yellow_health -= 1
-                #BULLET_HIT_SOUND.play()
+            # if event.type == YELLOW_HIT:
+            #     yellow_health -= 1
+            #     #BULLET_HIT_SOUND.play()
             
         #change the marketnumber if fadeClock >= fadeClockCap
         fadeClock += 1
         if(fadeClock >= fadeClockCap):
-            marketNumber += 100
+            #get a new market
+            while(newMarketID == marketID):
+                newMarketID = data.getRandomMarketID()
+            marketID = newMarketID
+            marketNumber = data.getIndexOfID(marketID)
             fadeClock = 0
 
             #change the image here
@@ -175,11 +190,12 @@ def main():
             image_file = io.BytesIO(image_str)
             # load the image from a file or stream
             image = pygame.image.load(image_file)
+            image = pygame.transform.smoothscale(image, (100, 100)) 
 
         keys_pressed = pygame.key.get_pressed()
 
 
-        draw_window(marketNumber, fadeClock, image)
+        draw_window(marketID, fadeClock, image)
 
     main()
 

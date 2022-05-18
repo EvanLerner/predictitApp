@@ -2,6 +2,7 @@
 import json
 import requests
 import warnings
+import random
 warnings.simplefilter(action='ignore', category=FutureWarning)
 #import pandas as pd
 #pd.set_option('display.max_rows', None) #print all rows without truncating
@@ -15,11 +16,17 @@ import urllib.request #Economist
 class Data:
     def __init__(self):
         self.data = []
+        self.numOfMarkets = 0
+        self.marketIDs = []
         #self.predictit_df = pd.DataFrame(self.data)
         self.resetData()
+        
 
     def getData(self):
         return self.data
+    
+    def getNumOfMarkets(self):
+        return self.numOfMarkets
 
     # Replace null values with zero
     def dict_clean(self, items):
@@ -41,6 +48,8 @@ class Data:
         # Market data by contract/price in dataframe
         self.data = []
         for p in jsondata['markets']:
+            self.marketIDs.append(p['id'])
+            self.numOfMarkets += 1
             for k in p['contracts']:
                 self.data.append([p['id'],p['name'],k['id'],k['name'],k['bestBuyYesCost'],k['bestBuyNoCost'],k['bestSellYesCost'],k['bestSellNoCost'],p['image']])
     
@@ -50,3 +59,18 @@ class Data:
             if(listOfData[0] == marketID):
                 marketWithSameID.append(listOfData)
         return (marketWithSameID)
+
+    def getRandomMarketID(self):
+        randomNumber = random.randrange(self.numOfMarkets)
+        return self.marketIDs[randomNumber]
+
+    def getIndexOfID(self, id):
+        for i in range(len(self.data)):
+            if(self.data[i][0] == id):
+                return i
+
+# d1 = Data()
+# for i in range(100):
+#     ranNum = d1.getRandomMarketID()
+#     print("market id is: " + str(ranNum))
+#     print("The index of the id is " + str(d1.getIndexOfID(ranNum)))
