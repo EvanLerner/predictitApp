@@ -29,25 +29,16 @@ marketIDOrderPlace = 0
 
 data = predictitAppProject.Data()
 marketID = data.getRandomMarketID()
-# newMarketID = marketID
+
 marketNumber = data.getIndexOfID(marketID)
 
 WhiteRectangle = pygame.Rect(0, 0, WIDTH, HEIGHT)
 
-#BULLET_HIT_SOUND = pygame.mixer.Sound('Assets/Grenade+1.mp3')
-#BULLET_FIRE_SOUND = pygame.mixer.Sound('Assets/Gun+Silencer.mp3')
-
 INFO_FONT = pygame.font.SysFont('comicsans', 10)
-WINNER_FONT = pygame.font.SysFont('comicsans', 100)
 gui_font = pygame.font.Font(None,30)
 
-#FPS = 60
 FPS = 50
 NUMBEROFCOLUMNS = 5
-# VEL = 5
-# BULLET_VEL = 7
-# MAX_BULLETS = 3
-# SPACESHIP_WIDTH, SPACESHIP_HEIGHT = 55, 40
 MARKETVALUEPLACE = 8
 VALUESLIST=['Market ID','Market Name','Contract ID','Contract Name','PredictIt Yes','bestBuyNoCost','BestSellYesCost','BestSellNoCost','image']
 
@@ -56,32 +47,25 @@ YELLOW_HIT = pygame.USEREVENT + 1
 RED_HIT = pygame.USEREVENT + 2
 FADERATIO = .33
 
-
+pause = False
 fadeClockCap = 300
 transperency = 0
 
-#initialize image
-#create data from predictitAppProject
-
-
 marketNumber = 0
 
-
-
-
-def draw_window(image, nextButton, backButton):
-
+def draw_window(image, nextButton, backButton, pauseButton):
     global fadeClock
     global marketID
-
+    global pause
+    #check if paused
+    if pause:
+        fadeClock = int(fadeClockCap/2)
+    
     #value below is the markets with the same id
     markets = data.getMarketsWithID(marketID)
 
     pygame.draw.rect(WIN, WHITE, WhiteRectangle)
-
-
     fade(image, fadeClock)
- 
     WIN.blit(image, (WIDTH* .85, HEIGHT*.75))
 
     #depth and width of text
@@ -95,34 +79,28 @@ def draw_window(image, nextButton, backButton):
 
     for i in range(len(markets)):
         for j in range(6):
-            # value = data.getData()[marketNumber][index]
             text = INFO_FONT.render(str(VALUESLIST[j+2]) + ": " +str(markets[i][j+2]), 1, BLACK)
             fade(text, fadeClock)
             WIN.blit(text, (width,depth))
             depth += 20
         depth = resetdepth
         width += 150
+        if(i+1) >= 10:
+            break
         if((i+1) % NUMBEROFCOLUMNS == 0):
             width = 10
             resetdepth += 6*20+30
             depth = resetdepth
+        
 
 
     #code for the fade counter in the app 
     nextButton.draw()
     backButton.draw()
+    pauseButton.draw()
 
     WIN.blit(INFO_FONT.render("Fade Timer: " + str(fadeClock), 1, BLACK), (10, 450))
     pygame.display.update()
-
-
-
-# def draw_winner(text):
-#     draw_text = WINNER_FONT.render(text, 1, WHITE)
-#     WIN.blit(draw_text, (WIDTH/2 - draw_text.get_width() /
-#                          2, HEIGHT/2 - draw_text.get_height()/2))
-#     pygame.display.update()
-#     pygame.time.delay(5000)
 
 #fades an object put into it, using the fadeClock to determine how much fade it should have
 def fade(fadingValue, fadeClock):
@@ -137,25 +115,16 @@ def fade(fadingValue, fadeClock):
 
 
 def main():
-    # red = pygame.Rect(700, 300, SPACESHIP_WIDTH, SPACESHIP_HEIGHT)
-    # yellow = pygame.Rect(100, 300, SPACESHIP_WIDTH, SPACESHIP_HEIGHT)
-
-    # red_bullets = []
-    # yellow_bullets = []
-
-    # red_health = 10
-    # yellow_health = 10
-
     #track the markets that are being used
     global marketIDOrder
     global marketIDOrderPlace
+    global fadeClock
+    global marketID
+    global marketNumber
 
     clock = pygame.time.Clock()
     run = True
-    global fadeClock
-    global marketID
-    # global newMarketID
-    global marketNumber
+
 
     newMarketID = marketID
     marketIDOrder.append(newMarketID)
@@ -169,11 +138,12 @@ def main():
     # load the image from a file or stream
     image = pygame.image.load(image_file)
     image = pygame.transform.smoothscale(image, (100, 100)) 
-    # image = pygame.transform.scale(image, (100, 100))
 
-    #button
+
+    #initialize button
     nextButton = Button('Next Button',200,40,(WIDTH*.6,HEIGHT*.8),5)
     backButton = Button('Back Button',200,40,(WIDTH*.1,HEIGHT*.8),5)
+    pauseButton = Button('Pause',70,40,(WIDTH*.41,HEIGHT*.8),5)
 
     while run:
         clock.tick(FPS)
@@ -181,27 +151,6 @@ def main():
             if event.type == pygame.QUIT:
                 run = False
                 pygame.quit()
-
-            # if event.type == pygame.KEYDOWN:
-            #     if event.key == pygame.K_LCTRL and len(yellow_bullets) < MAX_BULLETS:
-            #         bullet = pygame.Rect(
-            #             yellow.x + yellow.width, yellow.y + yellow.height//2 - 2, 10, 5)
-            #         yellow_bullets.append(bullet)
-            #         #BULLET_FIRE_SOUND.play()
-
-            #     if event.key == pygame.K_RCTRL and len(red_bullets) < MAX_BULLETS:
-            #         bullet = pygame.Rect(
-            #             red.x, red.y + red.height//2 - 2, 10, 5)
-            #         red_bullets.append(bullet)
-            #         #BULLET_FIRE_SOUND.play()
-
-            # if event.type == RED_HIT:
-            #     red_health -= 1
-            #     #BULLET_HIT_SOUND.play()
-
-            # if event.type == YELLOW_HIT:
-            #     yellow_health -= 1
-            #     #BULLET_HIT_SOUND.play()
             
         #change the marketnumber if fadeClock >= fadeClockCap
         fadeClock += 1
@@ -228,7 +177,7 @@ def main():
         keys_pressed = pygame.key.get_pressed()
 
 
-        draw_window(image, nextButton, backButton)
+        draw_window(image, nextButton, backButton, pauseButton)
 
         #ensure marketIDOrder isnt too big
         if(len(marketIDOrder) >= TOTALMARKETSSTORED):
@@ -275,6 +224,7 @@ class Button:
         global marketID
         global marketIDOrder
         global marketIDOrderPlace
+        global pause
 
         mouse_pos = pygame.mouse.get_pos()
         if self.top_rect.collidepoint(mouse_pos):
@@ -289,17 +239,23 @@ class Button:
                     if self.text == 'Next Button':
                         if(len(marketIDOrder) == marketIDOrderPlace):
                             fadeClock = fadeClockCap
+                            pause = False
                         else:
                             marketID = marketIDOrder[marketIDOrderPlace]
                             marketIDOrderPlace += 1
                             fadeClock = 10
+                            pause = False
                     if self.text == 'Back Button':
                         if(marketIDOrderPlace == 1):
                             fadeClock = 10
+                            pause = False
                         else:        
-                            marketID = marketIDOrder[marketIDOrderPlace-2]
+                            marketID = marketIDOrder[int(marketIDOrderPlace-2)]
                             marketIDOrderPlace -= 1
                             fadeClock = 10
+                            pause = False
+                    if self.text == 'Pause':
+                        pause = not pause
                     self.pressed = False
         else:
             self.dynamic_elecation = self.elevation
