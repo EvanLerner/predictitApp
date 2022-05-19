@@ -4,21 +4,12 @@ import requests
 import warnings
 import random
 warnings.simplefilter(action='ignore', category=FutureWarning)
-#import pandas as pd
-#pd.set_option('display.max_rows', None) #print all rows without truncating
-#pd.options.mode.chained_assignment = None #hide SettingWithCopyWarning
-#import numpy as np
-#import datetime
-import os
-import zipfile #Economist
-import urllib.request #Economist
 
 class Data:
     def __init__(self):
         self.data = []
         self.numOfMarkets = 0
         self.marketIDs = []
-        #self.predictit_df = pd.DataFrame(self.data)
         self.resetData()
         
 
@@ -68,9 +59,3 @@ class Data:
         for i in range(len(self.data)):
             if(self.data[i][0] == id):
                 return i
-
-# d1 = Data()
-# for i in range(100):
-#     ranNum = d1.getRandomMarketID()
-#     print("market id is: " + str(ranNum))
-#     print("The index of the id is " + str(d1.getIndexOfID(ranNum)))
