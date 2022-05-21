@@ -43,9 +43,9 @@ MARKETVALUEPLACE = 8
 VALUESLIST=['Market ID','Market Name','Contract ID','Contract Name','PredictIt Yes','bestBuyNoCost','BestSellYesCost','BestSellNoCost','image']
 
 
-YELLOW_HIT = pygame.USEREVENT + 1
-RED_HIT = pygame.USEREVENT + 2
 FADERATIO = .33
+
+
 
 pause = False
 fadeClockCap = 300
@@ -106,16 +106,25 @@ def draw_window(image, nextButton, backButton, pauseButton):
 def fade(fadingValue, fadeClock):
     if(fadeClock < fadeClockCap * FADERATIO):
         fadingValue.set_alpha(int((256*fadeClock/fadeClockCap)*1/FADERATIO))
-
     elif(fadeClock > fadeClockCap * (1-FADERATIO)):
         fadingValue.set_alpha(int((256*(1-fadeClock/fadeClockCap))*1/FADERATIO)-3)
-
     else:
         fadingValue.set_alpha(256)
 
 
+def changeImage(marketNumber):
+    image_url = data.getData()[marketNumber][MARKETVALUEPLACE]
+    image_str = urlopen(image_url).read()
+    # create a file object (stream)
+    image_file = io.BytesIO(image_str)
+    # load the image from a file or stream
+    image = pygame.image.load(image_file)
+    image = pygame.transform.smoothscale(image, (100, 100)) 
+    return image
+
 def main():
     #track the markets that are being used
+
     global marketIDOrder
     global marketIDOrderPlace
     global fadeClock
@@ -125,19 +134,11 @@ def main():
     clock = pygame.time.Clock()
     run = True
 
-
     newMarketID = marketID
     marketIDOrder.append(newMarketID)
     marketIDOrderPlace += 1
 
-    #initialize image
-    image_url = data.getData()[marketNumber][MARKETVALUEPLACE]
-    image_str = urlopen(image_url).read()
-    # create a file object (stream)
-    image_file = io.BytesIO(image_str)
-    # load the image from a file or stream
-    image = pygame.image.load(image_file)
-    image = pygame.transform.smoothscale(image, (100, 100)) 
+    image = changeImage(marketNumber)
 
 
     #initialize button
@@ -147,13 +148,49 @@ def main():
 
     while run:
         clock.tick(FPS)
+
+
+        #Button logic
+        global pause
+        if(nextButton.buttonPressed()):
+            if(len(marketIDOrder) == marketIDOrderPlace):
+                    fadeClock = fadeClockCap
+                    pause = False
+            else:
+                marketID = marketIDOrder[marketIDOrderPlace]
+                marketIDOrderPlace += 1
+                fadeClock = 10
+                pause = False
+            marketNumber = data.getIndexOfID(marketID)
+            image = changeImage(marketNumber)
+            nextButton.switchButton()
+
+        if(backButton.buttonPressed()):
+            if(marketIDOrderPlace == 1):
+                fadeClock = 10
+                pause = False
+            else:        
+                marketID = marketIDOrder[int(marketIDOrderPlace-2)]
+                marketIDOrderPlace -= 1
+                fadeClock = 10
+                pause = False
+            marketNumber = data.getIndexOfID(marketID)
+            image = changeImage(marketNumber)
+            backButton.switchButton()
+
+        if(pauseButton.buttonPressed()):
+            pause = not pause
+            pauseButton.switchButton()
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
                 pygame.quit()
-            
         #change the marketnumber if fadeClock >= fadeClockCap
         fadeClock += 1
+
+        #check for pause
+
         if(fadeClock >= fadeClockCap):
             #get a new market
             while(newMarketID == marketID):
@@ -165,14 +202,15 @@ def main():
             marketIDOrder.append(newMarketID)
             marketIDOrderPlace += 1
 
-            #change the image here
-            image_url = data.getData()[marketNumber][MARKETVALUEPLACE]
-            image_str = urlopen(image_url).read()
-            # create a file object (stream)
-            image_file = io.BytesIO(image_str)
-            # load the image from a file or stream
-            image = pygame.image.load(image_file)
-            image = pygame.transform.smoothscale(image, (100, 100)) 
+            # #change the image here
+            # image_url = data.getData()[marketNumber][MARKETVALUEPLACE]
+            # image_str = urlopen(image_url).read()
+            # # create a file object (stream)
+            # image_file = io.BytesIO(image_str)
+            # # load the image from a file or stream
+            # image = pygame.image.load(image_file)
+            # image = pygame.transform.smoothscale(image, (100, 100))
+            image = changeImage(marketNumber)
 
         keys_pressed = pygame.key.get_pressed()
 
@@ -186,6 +224,8 @@ def main():
     main()
 
 
+
+
 class Button:
     def __init__(self,text,width,height,pos,elevation):
         #Core attributes 
@@ -193,6 +233,8 @@ class Button:
         self.elevation = elevation
         self.dynamic_elecation = elevation
         self.original_y_pos = pos[1]
+        
+        self.startEvent = False
 
         # top rectangle 
         self.top_rect = pygame.Rect(pos,(width,height))
@@ -236,31 +278,20 @@ class Button:
                 self.dynamic_elecation = self.elevation
                 if self.pressed == True:
                     #next button and back button logic
-                    if self.text == 'Next Button':
-                        if(len(marketIDOrder) == marketIDOrderPlace):
-                            fadeClock = fadeClockCap
-                            pause = False
-                        else:
-                            marketID = marketIDOrder[marketIDOrderPlace]
-                            marketIDOrderPlace += 1
-                            fadeClock = 10
-                            pause = False
-                    if self.text == 'Back Button':
-                        if(marketIDOrderPlace == 1):
-                            fadeClock = 10
-                            pause = False
-                        else:        
-                            marketID = marketIDOrder[int(marketIDOrderPlace-2)]
-                            marketIDOrderPlace -= 1
-                            fadeClock = 10
-                            pause = False
-                    if self.text == 'Pause':
-                        pause = not pause
+                    self.startEvent = True
                     self.pressed = False
         else:
             self.dynamic_elecation = self.elevation
             self.top_color = '#475F77'
 
+    #input: 0 for nextbutton, 1 for back button, 2 for pausebutton
+    #output true if button is pressed
+    def buttonPressed(self):
+        return self.startEvent
+
+    #same input and output as func above, but instead switched the button pressed from true to false
+    def switchButton(self):
+        self.startEvent = not self.startEvent
 
 
 if __name__ == "__main__":
