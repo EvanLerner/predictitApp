@@ -21,11 +21,6 @@ YELLOW = (255, 255, 0)
 #stores how many markets you can prev and next to (must be an even number)
 TOTALMARKETSSTORED = 30
 
-fadeClock = 0
-
-#used to track prev and next markets
-marketIDOrder = []
-marketIDOrderPlace = 0
 
 data = predictitAppProject.Data()
 marketID = data.getRandomMarketID()
@@ -47,16 +42,12 @@ FADERATIO = .33
 
 
 
-pause = False
 fadeClockCap = 300
 transperency = 0
 
 marketNumber = 0
 
-def draw_window(image, nextButton, backButton, pauseButton):
-    global fadeClock
-    global marketID
-    global pause
+def draw_window(image, nextButton, backButton, pauseButton, marketID, pause, fadeClock):
     #check if paused
     if pause:
         fadeClock = int(fadeClockCap/2)
@@ -99,7 +90,6 @@ def draw_window(image, nextButton, backButton, pauseButton):
     backButton.draw()
     pauseButton.draw()
 
-    WIN.blit(INFO_FONT.render("Fade Timer: " + str(fadeClock), 1, BLACK), (10, 450))
     pygame.display.update()
 
 #fades an object put into it, using the fadeClock to determine how much fade it should have
@@ -125,11 +115,14 @@ def changeImage(marketNumber):
 def main():
     #track the markets that are being used
 
-    global marketIDOrder
-    global marketIDOrderPlace
-    global fadeClock
-    global marketID
-    global marketNumber
+    #used to track prev and next markets
+    marketIDOrder = []
+    marketIDOrderPlace = 0
+    
+    fadeClock = 0
+    pause = False
+    marketID = data.getRandomMarketID()
+    marketNumber = data.getIndexOfID(marketID)
 
     clock = pygame.time.Clock()
     run = True
@@ -151,7 +144,7 @@ def main():
 
 
         #Button logic
-        global pause
+
         if(nextButton.buttonPressed()):
             if(len(marketIDOrder) == marketIDOrderPlace):
                     fadeClock = fadeClockCap
@@ -215,7 +208,7 @@ def main():
         keys_pressed = pygame.key.get_pressed()
 
 
-        draw_window(image, nextButton, backButton, pauseButton)
+        draw_window(image, nextButton, backButton, pauseButton, marketID, pause, fadeClock)
 
         #ensure marketIDOrder isnt too big
         if(len(marketIDOrder) >= TOTALMARKETSSTORED):
@@ -262,12 +255,6 @@ class Button:
         self.check_click()	
 
     def check_click(self):
-        global fadeClock
-        global marketID
-        global marketIDOrder
-        global marketIDOrderPlace
-        global pause
-
         mouse_pos = pygame.mouse.get_pos()
         if self.top_rect.collidepoint(mouse_pos):
             self.top_color = '#D74B4B'
